@@ -5,6 +5,13 @@ const clientTwoStatus = document.getElementById("client-two-status");
 const clientOneChat = document.getElementById("client-one-chats");
 const clientTwoChat = document.getElementById("client-two-chats");
 
+const MessageType = {
+  USER_REGISTER: "user_register",
+  CHAT: "chat",
+  SERVER_RESPONSE: "server_response",
+  SERVER_ERROR: "server_error",
+};
+
 const appendChat = (chats, message) => {
   const li = document.createElement("li");
   li.innerText = message;
@@ -12,32 +19,32 @@ const appendChat = (chats, message) => {
 };
 
 wsClientOne.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  console.log(data);
+  const message = JSON.parse(event.data);
+  console.log(message);
 
-  if (data.type === "error") {
-    clientOneStatus.innerText = data.message;
+  if (message.type === MessageType.SERVER_ERROR) {
+    clientOneStatus.innerText = message.body.message;
   }
-  if (data.type === "server-response") {
-    clientOneStatus.innerText = data.message;
+  if (message.type === MessageType.SERVER_RESPONSE) {
+    clientOneStatus.innerText = message.body.message;
   }
-  if (data.type === "chat") {
-    appendChat(clientOneChat, `${data.username}: ${data.message}`);
+  if (message.type === MessageType.CHAT) {
+    appendChat(clientOneChat, `${message.body.user}: ${message.body.message}`);
   }
 };
 
 wsClientTwo.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  console.log(data);
+  const message = JSON.parse(event.data);
+  console.log(message);
 
-  if (data.type === "error") {
-    clientTwoStatus.innerText = data.message;
+  if (message.type === MessageType.SERVER_ERROR) {
+    clientTwoStatus.innerText = message.body.message;
   }
-  if (data.type === "server-response") {
-    clientTwoStatus.innerText = data.message;
+  if (message.type === MessageType.SERVER_RESPONSE) {
+    clientTwoStatus.innerText = message.body.message;
   }
-  if (data.type === "chat") {
-    appendChat(clientTwoChat, `${data.username}: ${data.message}`);
+  if (message.type === MessageType.CHAT) {
+    appendChat(clientTwoChat, `${message.body.user}: ${message.body.message}`);
   }
 };
 
@@ -61,18 +68,16 @@ wsClientTwo.onclose = () => {
 
 const register = (ws, username) => {
   const registerMessage = JSON.stringify({
-    type: "user_reg",
-    username: username,
+    type: MessageType.USER_REGISTER,
+    body: { user: username },
   });
   ws.send(registerMessage);
 };
 
 const sendChat = (ws, sender, recipient, message) => {
   const chatMessage = JSON.stringify({
-    type: "chat",
-    username: sender,
-    recipient: recipient,
-    message: message,
+    type: MessageType.CHAT,
+    body: { user: sender, recipient, message },
   });
   ws.send(chatMessage);
 };

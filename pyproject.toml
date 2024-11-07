@@ -10,6 +10,20 @@ python = "^3.11"
 websockets = "^13.1"
 
 
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.3"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+
+[tool.black]
+line-length = 120
+
+[tool.isort]
+profile = "black"
+
+[tool.pytest.ini_options]
+pythonpath = ["./src"]
+filterwarnings = "ignore::DeprecationWarning"

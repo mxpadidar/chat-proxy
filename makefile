@@ -9,6 +9,9 @@ run_main:
 run_proxies:
 	@poetry run python src/proxy_server.py
 
+run_tests:
+	@poetry run pytest tests/
+
 clean:
 	@find . -type d -name "__pycache__" -exec rm -r {} +
 	@find . -type d -name ".mypy_cache" -exec rm -r {} +
