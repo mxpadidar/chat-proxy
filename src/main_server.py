@@ -13,6 +13,7 @@ class MainServer(BaseServer):
         super().__init__(host, port)
         self.proxies: dict[str, ServerConnection] = {}  # {proxy: ws}
         self.user_proxy: dict[str, str] = {}  # {user: proxy}
+        self.user_token: dict[str, str] = {}  # {user: token}
         self.logger.info(f"MainServer initialized on {host}:{port}")
 
     async def _handler(self, ws: ServerConnection, *args, **kwargs) -> None:
@@ -20,7 +21,8 @@ class MainServer(BaseServer):
             try:
                 message = Message.from_json(event)  # type: ignore
             except ValidationError as e:
-                await ws.send(e.json())
+                message = Message(type=MessageType.SERVER_ERROR, body=e.to_dict())
+                await ws.send(message.to_json())
                 continue
 
             if message.type == MessageType.REGISTER_PROXY:
@@ -58,7 +60,8 @@ class MainServer(BaseServer):
             user = message.user
             proxy = message.proxy
         except (ValidationError, MissingHeaderError) as e:
-            await ws.send(e.json())
+            message = Message(type=MessageType.SERVER_ERROR, body=e.to_dict())
+            await ws.send(message.to_json())
             return
 
         self.user_proxy[user] = proxy
@@ -75,7 +78,8 @@ class MainServer(BaseServer):
             proxy = message.proxy
         except MissingHeaderError as e:
             self.logger.error(e.message)
-            await ws.send(e.json())
+            message = Message(type=MessageType.SERVER_ERROR, body=e.to_dict())
+            await ws.send(message.to_json())
             return
 
         self.proxies[proxy] = ws
@@ -96,7 +100,8 @@ class MainServer(BaseServer):
             chat_message = message.message
         except (ValidationError, MissingHeaderError) as e:
             self.logger.error(e.message)
-            await ws.send(e.json())
+            message = Message(type=MessageType.SERVER_ERROR, body=e.to_dict())
+            await ws.send(message.to_json())
             return
 
         if not proxy:

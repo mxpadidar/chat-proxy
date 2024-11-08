@@ -1,16 +1,11 @@
-import json
-
-
 class BaseError(Exception):
     def __init__(self, message: str, type: str) -> None:
         self.message = message
         self.type = type
         super().__init__(message)
 
-    def json(self) -> str:
-        return json.dumps(
-            {"status": "error", "type": self.type, "message": self.message}
-        )
+    def to_dict(self) -> dict:
+        return {"type": self.type, "message": self.message}
 
 
 class ValidationError(BaseError):

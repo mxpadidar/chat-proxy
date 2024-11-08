@@ -67,12 +67,13 @@ class ProxyServer(BaseServer):
                         ws = self.users[sender_user]
                         await ws.send(message.to_json())
 
-                elif message.type in (MessageType.SERVER_RESPONSE, MessageType.SERVER_ERROR):
-                    user = message.user
+                elif message.type in (MessageType.SERVER_RESPONSE, MessageType.SERVER_ERROR) and message.body.get(
+                    "user"
+                ):
+                    user = message.body["user"]
                     if user in self.users:
                         ws = self.users[user]
                         await ws.send(message.to_json())
-
             except ValidationError as e:
                 self.logger.error(f"Error: {e.message}, Message: {event}")  # type: ignore
                 continue
@@ -82,6 +83,7 @@ class ProxyServer(BaseServer):
                 continue
 
     async def handle_client_disconnection(self, ws: ServerConnection, *args, **kwargs) -> None:
+        """Remove the user from the list of users when the connection is closed."""
         for user, user_ws in self.users.items():
             if user_ws == ws:
                 self.users.pop(user)
@@ -94,13 +96,13 @@ class ProxyServer(BaseServer):
         message = Message(type=MessageType.REGISTER_PROXY)
         message.proxy = self.url
         await main_server.send(message.to_json())
-        response = await main_server.recv()
-        self.logger.info(response)  # type: ignore
+        # response = await main_server.recv()
+        # self.logger.info(response)  # type: ignore
         self.logger.info(f"ProxyServer registered with main server: {self.port}")  # type: ignore
 
     async def start(self) -> None:
-        """Override the start method to connect to the main server, register the proxy server,
-        and consume messages from the main server."""
+        """Override the start method to connect to the main server,
+        register the proxy server, and consume messages from the main server."""
         main_server = await connect(self.main_server_url)
         await self.register_proxy(main_server)
         asyncio.create_task(self.consume_main_server(main_server))

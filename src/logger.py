@@ -2,6 +2,10 @@ import logging
 
 
 class Logger:
+    """
+    Singleton class to log messages to the console
+    """
+
     logger: logging.Logger
     instance: "Logger"
     initialized = False
